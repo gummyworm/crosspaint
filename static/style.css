@@ -1,0 +1,41 @@
+*{
+  font-family: 'Press Start 2P', cursive;
+}
+
+html {
+  background: #6c5eb5;
+}
+
+h1 {
+  color: #fff;
+}
+
+hr {
+  size: 10px;
+}
+
+#header {
+  text-align: center;
+  font-family: sans-serif;
+}
+
+#pixmap {
+  padding-left: 0;
+  padding-right: 0;
+
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+
+  outline: #352879 solid thin;
+}
+
+#palette {
+
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+
+  outline: #352879 solid thin;
+}
+
