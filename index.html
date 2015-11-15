@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+<link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
+<title>Crosspaint</title>
+<link rel="stylesheet" type="text/css" href="static/style.css">
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+</head>
+<body>
+<div id="header">
+  <h1>CROSSPAINT</h1> 
+</div>
+
+  <canvas id="pixmap" width="800" height="600"></canvas>
+  <canvas id="palette" width="500" height="80"></canvas>
+</div>
+
+<script src="static/sylvester.js"></script>
+<script src="static/glUtils.js"></script>
+<script src="static/sceneNode.js"></script>
+<!--Texture shader--------------------------------------------------->
+<script id="shader-fs" type="x-shader/x-fragment">
+  varying highp vec2 vTextureCoord;
+  uniform sampler2D uSampler;
+  
+  void main(void) {
+    gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+  }
+</script>
+<script id="shader-vs" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+  attribute vec2 aTextureCoord;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  varying highp vec2 vTextureCoord;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    vTextureCoord = aTextureCoord;
+  }
+</script>
+<!--Line shader------------------------------------------------------>
+<script id="line-fs" type="x-shader/x-fragment">
+  varying highp vec4 vColor;
+  void main(void) {
+    gl_FragColor = vColor;
+  }
+</script>
+<script id="line-vs" type="x-shader/x-vertex">
+  attribute vec2 aVertexPosition;
+  attribute vec4 aColor;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  varying highp vec4 vColor;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
+    vColor = aColor;
+  }
+</script>
+<script src="static/palette.js"></script>
+<script src="static/main.js"></script>
+<script src="static/draw.js"></script>
+<script src="static/input.js"></script>
+<script src="static/platforms/platform.js"></script>
+<script src="static/platforms/platform_c64.js"></script>
+<script>
+	platform = new C64();
+</script>
+</body>
+</html>
