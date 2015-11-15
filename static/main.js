@@ -434,7 +434,6 @@ Pixmap.prototype.redraw = function() {
 	// Set the drawing position to the "identity" point, which is
 	loadIdentity();
 	mvTranslate([-0.0, 0.0, -1.0]);
-
 	// array, setting attributes, and pushing it to GL.
 	gl.useProgram(this.pixmapShader.program);
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.pixmapShader.vertexVBO);
@@ -455,14 +454,39 @@ Pixmap.prototype.redraw = function() {
 	gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
 
 	// draw the grid(s)
-	if(this.majorGridOn) {
-		this.majorGrid.draw();
-	}
 	if(this.minorGridOn) {
 		this.minorGrid.draw();
 	}
+	if(this.majorGridOn) {
+		this.majorGrid.draw();
+	}
+}
+
+setupControls = function() {
+	document.getElementById("showMajor").addEventListener('click', 
+	function(evt) {
+		pixmap.majorGridOn = !pixmap.majorGridOn;
+		if(pixmap.majorGridOn) {
+			evt.target.style.color = "black";
+		} else {
+			evt.target.style.color = "grey";
+		}
+		pixmap.redraw();
+	});
+
+	document.getElementById("showMinor").addEventListener('click', 
+	function(evt) {
+		pixmap.minorGridOn = !pixmap.minorGridOn;
+		if(pixmap.minorGridOn) {
+			evt.target.style.color = "black";
+		} else {
+			evt.target.style.color = "grey";
+		}
+		pixmap.redraw();
+	});
 }
 
 var pixmap = new Pixmap()
 pixmap.start();
 pixmap.redraw();
+setupControls();
