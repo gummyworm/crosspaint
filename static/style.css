@@ -2,19 +2,6 @@
   font-family: 'Press Start 2P', cursive;
 }
 
-*.unselectable {
-   -moz-user-select: -moz-none;
-   -khtml-user-select: none;
-   -webkit-user-select: none;
-
-   /*
-     Introduced in IE 10.
-     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-   */
-   -ms-user-select: none;
-   user-select: none;
-}
-
 html {
   background: #6c5eb5;
 }
@@ -34,8 +21,14 @@ hr {
 }
 
 label {
-  margin: auto;
-  border: #222222 solid thick;
+	margin: auto;
+	border: #222222 solid thick;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 #header {
