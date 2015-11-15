@@ -187,8 +187,20 @@ Pixmap.prototype.listen = function() {
 		this.onMouseUp(evt);
 	}.bind(this), false);
 
+	this.canvas.addEventListener('touchstart', function(evt) {
+		this.onTouch(evt);
+	}.bind(this), false);
+
+	this.canvas.addEventListener('touchend', function(evt) {
+		this.onTouchEnd(evt);
+	}.bind(this), false);
+
 	this.canvas.addEventListener('mousemove', function(evt) {
 		this.onMouseMove(evt);
+	}.bind(this), false);
+
+	this.canvas.addEventListener('touchmove', function(evt) {
+		this.onTouchMove(evt);
 	}.bind(this), false);
 
 	setInterval(function() {
@@ -196,16 +208,30 @@ Pixmap.prototype.listen = function() {
 	}.bind(this), 15);
 }
 
+Pixmap.prototype.drawStart = function(x, y) {
+	this.setPixel(pixelPos.x, pixelPos.y, 0xff, 0x00, 0x00, 0xff);
+	this.applyPixels();
+	this.mouseIsDown = true;
+	this.redraw();
+}
+
+Pixmap.prototype.drawStop = function(x, y) {
+	this.mouseIsDown = false;
+}
+
+Pixmap.prototype.drawTo = function(x, y) {
+	this.line(this.lastPos.x, this.lastPos.y, x, y);
+	this.setPixel(x, y, this.color);
+	this.applyPixels();
+	this.redraw();
+}
+
 // onMouseDown is called when the mouse is moved over the canvas.
 Pixmap.prototype.onMouseDown = function(evt) {
 	var mousePos = this.getMousePos(evt);
 	pixelPos = this.screen2Pixel(mousePos);
-	this.setPixel(pixelPos.x, pixelPos.y, 0xff, 0x00, 0x00, 0xff);
-	this.applyPixels();
-	this.mouseIsDown = true;
+	this.drawStart(pixelPos.x, pixelPos.y);
 	this.lastPos = pixelPos;
-
-	this.redraw();
 }
 
 // onMouseDown is called when the mouse button is pressed on the canvas.
@@ -213,17 +239,37 @@ Pixmap.prototype.onMouseMove = function(evt) {
 	var mousePos = this.getMousePos(evt);
 	var pixelPos = this.screen2Pixel(mousePos);
 	if(this.mouseIsDown) {
-		this.line(this.lastPos.x, this.lastPos.y, pixelPos.x, pixelPos.y);
-		this.setPixel(pixelPos.x, pixelPos.y, this.color);
-		this.applyPixels();
-		this.lastPos = pixelPos;
-
-		this.redraw();
+		this.drawTo(pixelPos.x, pixelPos.y);
 	}
+	this.lastPos = pixelPos;
 }
 
 // onMouseUp is called when the mouse button is released on the canvas.
 Pixmap.prototype.onMouseUp = function(evt) {
+	var mousePos = this.getMousePos(evt);
+	var pixelPos = this.screen2Pixel(mousePos);
+	this.drawStop(pixelPos.x, pixelPos.y);
+}
+
+// onTouch is called when a new touch event occurs.
+Pixmap.prototype.onTouch = function(evt) {
+	var touchPos = this.getTouchPos(evt);
+	var pixelPos = this.screen2Pixel(touchPos);
+	this.drawStop(pixelPos.x, pixelPos.y);
+}
+
+// onTouchMove is called when touch movement occurs.
+Pixmap.prototype.onTouchMove = function(evt) {
+	var mousePos = this.getTouchPos(evt);
+	var pixelPos = this.screen2Pixel(mousePos);
+	if(this.mouseIsDown) {
+		this.drawTo(pixelPos.x, pixelPos.y);
+	}
+	this.lastPos = pixelPos;
+}
+
+// onTouchEnd is called when a touch event ends.
+Pixmap.prototype.onTouchEnd = function(evt) {
 	this.mouseIsDown = false;
 }
 
@@ -241,6 +287,14 @@ Pixmap.prototype.getMousePos = function(evt) {
 	return {
 		x: evt.clientX - rect.left,
 		y: evt.clientY - rect.top
+	};
+}
+
+// getTouchPos returns the touch position given the canvas' touch event.
+Pixmap.prototype.getTouchPos = function(evt) {
+	return {
+		x: evt.changedTouches[0].pageX,
+		y: evt.changedTouches[0].pageY
 	};
 }
 
