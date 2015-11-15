@@ -93,7 +93,7 @@ var Grid = function(x, y, width, height, lineW, c) {
 		this.buff[12 * i + 6] = this.spacing.x * i;
 		this.buff[12 * i + 7] = this.height;
 		this.buff[12 * i + 8] = c.r;
-		this.buff[12 * i + 9] = c.g;      
+		this.buff[12 * i + 9] = c.g;
 		this.buff[12 * i + 10] = c.b;
 		this.buff[12 * i + 11] = c.a;
 	}
@@ -130,7 +130,7 @@ var Grid = function(x, y, width, height, lineW, c) {
 Grid.prototype.constructor = Grid;
 
 // draw renders the grid.
-Grid.prototype.draw = function() { 
+Grid.prototype.draw = function() {
 	gl.useProgram(this.shader.program)
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
 	setMatrixUniforms(this.shader.program);
@@ -159,7 +159,7 @@ var Pixmap = function() {
 
 	// pixmapShader contains the OpenGL handles used for the pixmap drawing.
 	this.pixmapShader = 0;
-	
+
 	// tex is the texture used as a surface for the pixels.
 	this.tex = {
 		id: 0,
@@ -173,6 +173,9 @@ var Pixmap = function() {
 		attrPos: 0,
 		attrCol: 0
 	};
+
+	this.magFactor = 1;	// the amount to scale each pixel by
+	this.maxMag = 16;	// the maximum magnification factor.
 }
 
 Pixmap.prototype.constructor = Pixmap;
@@ -201,6 +204,14 @@ Pixmap.prototype.listen = function() {
 
 	this.canvas.addEventListener('touchmove', function(evt) {
 		this.onTouchMove(evt);
+	}.bind(this), false);
+
+	this.canvas.addEventListener('mousewheel', function(evt) {
+		this.onScroll(evt);
+	}.bind(this), false);
+
+	this.canvas.addEventListener('keydown', function(evt) {
+		this.onKeydown(evt);
 	}.bind(this), false);
 
 	setInterval(function() {
@@ -273,6 +284,11 @@ Pixmap.prototype.onTouchEnd = function(evt) {
 	this.mouseIsDown = false;
 }
 
+// onScroll is called when a mousewheel event occurs.
+Pixmap.prototype.onScroll = function(evt) {
+	this.zoom(this.magFactor + evt.wheelDelta);
+}
+
 // screen2Pixel returns the pixel coordinate at the given screen (mouse) coord.
 Pixmap.prototype.screen2Pixel = function(pos) {
 	return {
@@ -298,6 +314,19 @@ Pixmap.prototype.getTouchPos = function(evt) {
 	};
 }
 
+// onKeydown is called when a keyboard 'down' event occurs.
+Pixmap.prototype.onKeydown = function(evt) {
+	var code = evt.keyCode || evt.charCode;
+	switch(code) {
+		case 49:	//1 XXX get from settings table
+			this.zoom(this.magFactor + 1);
+			break;
+		case 50: 	//2 XXX get from settings table
+			this.zoom(this.magFactor - 1);
+			break;
+	}
+
+}
 
 // setColor sets the pen color.
 Pixmap.prototype.setColor = function(color) {
@@ -313,7 +342,7 @@ Pixmap.prototype.line = function(x0, y0, x1, y1) {
 	var err = dx-dy;
 	var e2 = 0
 
-	//draw the line (bresenham)	   
+	//draw the line (bresenham)
 	while(true){
 		this.setPixel(x0, y0, this.color);
 		if ((x0==x1) && (y0==y1)) {
@@ -336,6 +365,8 @@ Pixmap.prototype.line = function(x0, y0, x1, y1) {
 Pixmap.prototype.start = function() {
 	this.canvas = document.getElementById("pixmap");
 	this.canvas.style.cursor = "crosshair";
+	this.canvas.setAttribute("tabindex", 0);
+
 	this.initWebGL(this.canvas);      // Initialize the GL context
 	// Only continue if WebGL is available and working
 	if (gl) {
@@ -356,7 +387,7 @@ Pixmap.prototype.start = function() {
 		this.majorGrid = new Grid(8, 8, this.width, this.height, 2,
 				{r: 1.0, g: 1.0, b: 1.0, a: 0.2});
 		this.minorGrid = new Grid(1, 1, this.width, this.height, 1,
-			       	{r: 1.0, g: 1.0, b: 1.0, a: 0.05});
+				{r: 1.0, g: 1.0, b: 1.0, a: 0.05});
 	}
 	// set up event handlers
 	this.mouseIsDown = false;
@@ -467,10 +498,33 @@ Pixmap.prototype.initBuffers = function() {
 
 	this.pixmapShader.indexVBO = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.pixmapShader.indexVBO);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, 
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
 			new Uint16Array(indices), gl.STATIC_DRAW);
 }
 
+// zoom sets the magnification factor to mag and updates the buffers accordingly
+Pixmap.prototype.zoom = function(mag) {
+	this.magFactor = mag;
+	if(this.magFactor < 1) {
+		this.magFactor = 1;
+	} else if(this.magFactor >= this.maxMag) {
+		this.magFactor = maxMag;
+	}
+	w = (this.width / this.magFactor) / this.tex.width;
+	h = (this.width / this.magFactor) / this.tex.width;
+	var texcos = [
+		0.0, 0.0,
+		w, 0.0,
+		w, h,
+		0.0, h
+	];
+	gl.deleteBuffer(this.pixmapShader.texcoVBO);
+	this.pixmapShader.texcoVBO = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.pixmapShader.texcoVBO);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texcos),
+		gl.STATIC_DRAW);
+	this.redraw();
+}
 
 // drawMinorGrid renders the minor grid.
 Pixmap.prototype.drawMinorGrid = function() {
@@ -517,7 +571,7 @@ Pixmap.prototype.redraw = function() {
 }
 
 setupControls = function() {
-	document.getElementById("showMajor").addEventListener('click', 
+	document.getElementById("showMajor").addEventListener('click',
 	function(evt) {
 		pixmap.majorGridOn = !pixmap.majorGridOn;
 		if(pixmap.majorGridOn) {
@@ -528,7 +582,7 @@ setupControls = function() {
 		pixmap.redraw();
 	});
 
-	document.getElementById("showMinor").addEventListener('click', 
+	document.getElementById("showMinor").addEventListener('click',
 	function(evt) {
 		pixmap.minorGridOn = !pixmap.minorGridOn;
 		if(pixmap.minorGridOn) {
